@@ -1,5 +1,4 @@
-import pygame, numpy
-from numpy_da import DynamicArray
+import pygame
 
 
 pygame.init()
@@ -7,32 +6,39 @@ screen = pygame.display.set_mode((500, 500))
 pygame.display.set_caption('testing solving methods')
 clock = pygame.time.Clock()
 
-
-gravity : float = 9.8;
-position = pygame.Vector2(250,400)
-velocity = pygame.Vector2(0, 100)
-particle_size = 20
+dt = 0.05
+current_pos = pygame.Vector2(255, 255)
+velocity = pygame.Vector2(0,0)
 
 
-positions = DynamicArray(shape = 0, index_expansion = True)
-velocities = DynamicArray(shape = 0, index_expansion = True)
+last_pos = pygame.Vector2(255,255)
+
+acceleration = 9.8
 
 
-def update(dt):
-    velocity.y += gravity*dt
-    position.y += velocity.y*dt
+def update():
+    velocity_y = current_pos.y - last_pos.y
+    last_pos.y = current_pos.y
+    current_pos.y += velocity_y + acceleration*dt*dt
+    pygame.draw.circle(screen, "white", current_pos, 10)
 
-    resolve_border_collisions()
-    pygame.draw.circle(screen, "red", position, particle_size)  
 
-def resolve_border_collisions():
-    if (position.y > screen.get_height()- particle_size):
-        position.y = screen.get_height() - particle_size 
-        velocity.y = - velocity.y
-    
-    if (position.y < particle_size):
-        position.y = particle_size
-        velocity.y = - velocity.y
+
+def constraint():
+    if current_pos.y > (screen.get_height()-10):
+        velocity_y = current_pos.y - last_pos.y
+        #print(f"Positions before changing: Current -> {current_pos.y} and Last {last_pos.y}")
+
+        # This handles weirdness with the Verlet integration and the collisions at the boundaries. It's needed because we need the velocity to behave correctly when coming off the wall which means we need to set the last position past the bounding surface to correclty calculate the collisions.
+
+        current_pos.y = screen.get_height() - 10
+        last_pos.y = velocity_y + current_pos.y
+
+        #print(f"Current Position {current_pos.y}")
+        #print(f"Last Position {last_pos.y}")
+
+
+
 
 def main():
     running = True
@@ -44,10 +50,10 @@ def main():
 
         pygame.display.flip()
         screen.fill("black")
-    
-        dt = clock.tick(1000)/250
-
-        update(dt)
+        
+        clock.tick(100)
+        constraint()
+        update()
 
 
 main()
