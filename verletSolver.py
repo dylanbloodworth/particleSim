@@ -1,4 +1,5 @@
 import pygame
+from math import *
 
 # Initializes the pygame and screen for the animation sequence.
 pygame.init()
@@ -97,6 +98,7 @@ class Solver:
         self.apply_acceleration()
         self.apply_contraints()
         self.update_position()
+        self.detect_collisions()
 
     def update_position(self):
         for obj in verlet_obj.instances:
@@ -110,6 +112,26 @@ class Solver:
         for obj in verlet_obj.instances:
             obj.boundary_constraint()
 
+    def detect_collisions(self):
+        for obj_1 in verlet_obj.instances:
+            for obj_2 in verlet_obj.instances:
+
+                if obj_1 != obj_2:
+                    collision_axis = obj_1.pos_cur - obj_2.pos_cur
+                    dist = collision_axis.length()
+                    constraint = obj_1.radius + obj_2.radius
+
+                    if constraint > dist:
+                        print(dist)
+                        n = collision_axis.normalize()
+                        print(n)
+
+                        delta = constraint - dist
+
+                        vel1 = obj_1.pos_cur - obj_1.pos_prev
+                        obj_1.pos_cur += 0.5 * dist * n
+                        obj_1.pos_prev += vel1 + obj_2
+
 
 def main():
 
@@ -118,8 +140,8 @@ def main():
     dt = clock.tick(60)/500
     solve = Solver(dt)
 
-    verlet_obj([255, 255], [10, 20], [0, 9.8], dt, 10)
-    verlet_obj([100, 300], [-30, 40], [0, 9.8], dt, 20)
+    verlet_obj([255, 255], [0, 0], [0, 9.8], dt, 10)
+    verlet_obj([255, 100], [0, 0], [0, 9.8], dt, 10)
 
     while running:
         clock.tick(60)
